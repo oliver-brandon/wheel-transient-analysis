@@ -20,6 +20,7 @@ SAMPLE_RATE = 1017/N;
 SESSION_DURATION = 3600;
 WINDOW_SIZE_SECONDS = 15;
 % HAFT_THRESH = 2;
+includeHAFT = 'false';
 MAD_MULTIPLIER = 3;
 MIN_PK_WIDTH = 0.2 * SAMPLE_RATE;
 %Snippet Args%
@@ -132,7 +133,7 @@ for i = 1:height(signal_chunksA)
     
     [allPeaksA, allIndicesA, mad, filteredOutMad, medianY, filteredOutMedianY, ...
         firstThresholdY, secondThresholdY] = processChunks(signal_chunksA, ...
-        signal_chunksAind, HAFT_THRESHA, MAD_MULTIPLIER, MIN_PK_WIDTH);
+        signal_chunksAind, HAFT_THRESHA, MAD_MULTIPLIER, MIN_PK_WIDTH, includeHAFT);
 end
 % First, calculate the starting index of each chunk in the original signal
 chunk_starts = (0:size(signal_chunksA, 2)-1) * size(signal_chunksA, 1);
@@ -148,7 +149,7 @@ for i = 1:height(signal_chunksC)
     
     [allPeaksC, allIndicesC, mad, filteredOutMad, medianY, filteredOutMedianY, ...
         firstThresholdY, secondThresholdY] = processChunks(signal_chunksC, ...
-        signal_chunksCind, HAFT_THRESHC, MAD_MULTIPLIER, MIN_PK_WIDTH);
+        signal_chunksCind, HAFT_THRESHC, MAD_MULTIPLIER, MIN_PK_WIDTH, includeHAFT);
 end
 % First, calculate the starting index of each chunk in the original signal
 chunk_starts = (0:size(signal_chunksC, 2)-1) * size(signal_chunksC, 1);
@@ -159,3 +160,10 @@ adjusted_peaksC = cell2mat(adjusted_peaksC);
 % Plots peaks for signalC
 visualize_peaks(myDir, signalC, time_pad, adjusted_peaksC);
 
+% Count the number of peaks for signalA and signalC
+numPeaksA = length(adjusted_peaksA)
+numPeaksC = length(adjusted_peaksC)
+
+% Calculate the frequency of peaks using SESSION_DURATION for time
+frequencyA = numPeaksA / SESSION_DURATION
+frequencyC = numPeaksC / SESSION_DURATION

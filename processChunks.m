@@ -1,4 +1,4 @@
-function [allPeaks, allIndices, mad, filteredOutMad, medianY, filteredOutMedianY, firstThresholdY, secondThresholdY] = processChunks(arrValues, arrIndexes, highAmpFilt, transientsThresh, MIN_PK_WIDTH)
+function [allPeaks, allIndices, mad, filteredOutMad, medianY, filteredOutMedianY, firstThresholdY, secondThresholdY] = processChunks(arrValues, arrIndexes, highAmpFilt, transientsThresh, MIN_PK_WIDTH, includeHAFT)
 
     allPeaks = {};
     allIndices = {};
@@ -6,19 +6,19 @@ function [allPeaks, allIndices, mad, filteredOutMad, medianY, filteredOutMedianY
     for i = 1:length(arrValues)
         chunk = arrValues(:,i);
         chunkIndexes = arrIndexes(:,i);
-
         chunk = chunk(~isnan(chunk));
+        
         median = nanmedian(chunk);
-
         mad = nanmedian(abs(chunk-median));
-
         firstThreshold = median + (highAmpFilt*mad);
-
-        greaterThanMad = find(chunk>firstThreshold);
-
-        arr = 1:length(chunk);
-        lowerThanMad = ~ismember(arr, greaterThanMad);
-        filteredOut = chunk(find(lowerThanMad==1));
+        filteredOut = chunk;
+        
+        if includeHAFT
+            greaterThanMad = find(chunk>firstThreshold);
+            arr = 1:length(chunk);
+            lowerThanMad = ~ismember(arr, greaterThanMad);
+            filteredOut = chunk(find(lowerThanMad==1));
+        end
 
         filteredOutMedian = nanmedian(filteredOut);
         filteredOutMad = nanmedian(abs(filteredOut-nanmedian(filteredOut)));
@@ -41,5 +41,6 @@ function [allPeaks, allIndices, mad, filteredOutMad, medianY, filteredOutMedianY
 
         allPeaks{end+1} = newPeaks;
         allIndices{end+1} = peaks;
+        
     end
 end
