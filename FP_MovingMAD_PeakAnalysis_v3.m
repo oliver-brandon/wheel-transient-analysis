@@ -19,8 +19,8 @@ N = 10; %Downsample N times
 SAMPLE_RATE = 1017/N;
 SESSION_DURATION = 3600;
 WINDOW_SIZE_SECONDS = 15;
-% HAFT_THRESH = 2;
-includeHAFT = 'false';
+HAFT_THRESH_SNR = 'false';
+includeHAFT = 'true';
 MAD_MULTIPLIER = 3;
 MIN_PK_WIDTH = 0.2 * SAMPLE_RATE;
 %Snippet Args%
@@ -57,15 +57,20 @@ data.streams.(NAC_ISOS).data = downsample(data.streams.(NAC_ISOS).data, N);
 data.streams.(NAC_DA).data = downsample(data.streams.(NAC_DA).data, N);
 time = downsample(time, N);
 
-% Calculate signal to noise ratio for HAFT %
-%RMS%
-VnoiseA = rms(data.streams.(DLS_ISOS).data, 'omitnan');
-VsignalA = rms(data.streams.(DLS_DA).data, 'omitnan');
-VnoiseC = rms(data.streams.(NAC_ISOS).data, 'omitnan');
-VsignalC = rms(data.streams.(NAC_DA).data, 'omitnan');
+if strcmp(HAFT_THRESH_SNR, 'true')
+    % Calculate signal to noise ratio for HAFT %
+    %RMS%
+    VnoiseA = rms(data.streams.(DLS_ISOS).data, 'omitnan');
+    VsignalA = rms(data.streams.(DLS_DA).data, 'omitnan');
+    VnoiseC = rms(data.streams.(NAC_ISOS).data, 'omitnan');
+    VsignalC = rms(data.streams.(NAC_DA).data, 'omitnan');
 
-HAFT_THRESHA = VsignalA/VnoiseA;
-HAFT_THRESHC = VsignalC/VnoiseC;
+    HAFT_THRESHA = VsignalA/VnoiseA;
+    HAFT_THRESHC = VsignalC/VnoiseC;
+else
+    HAFT_THRESHA = 2;
+    HAFT_THRESHC = 2;
+end
 
 %detrend & dFF%
 %465A%
