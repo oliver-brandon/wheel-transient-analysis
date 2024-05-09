@@ -7,8 +7,8 @@ warning off;
 dType = 2; % 1 = TDT, 2 = mat
 t = 30; % first t seconds are discarded to remove LED on artifact
 N = 100; % downsample signal N times
-channel = 1; % 1 = A, 2 = C
-ARTIFACT465 = 30;
+channel = 2; % 1 = A, 2 = C
+ARTIFACT465 = 0;
 saveArtifact = 0; % 0 = do not save, 1 = save, 2 = overwrite
 figSave = 1; % saves to folder with mat files
 prom = 3;
@@ -16,7 +16,7 @@ session_duration = 5400;
 thresh_base1 = [t, 600]; % baseline for first 10 minutes (habituation)
 thresh_base2 = [600, 1800]; % baseline for next 20 minutes (vehicle)
 thresh_base3 = [1800, 5400]; % baseline for last 60 minutes (cocaine)
-useOtherThresh = 0;
+useOtherThresh = 1;
 other_thresh1 = [t, 600];
 other_thresh2 = [600, 1800];
 other_thresh3 = [600, 1800];
@@ -42,7 +42,7 @@ elseif dType == 2
     TANK_NAME = strcat(pathname,TANK_NAME);
     load(TANK_NAME)
 else
-    disp('Select a dType.')
+    disp('Select a data type')
 end
 if channel == 1
     ISOS = 'x405A';
@@ -185,13 +185,13 @@ end
 [pks,locs] = findpeaks(Grab_filt(:,idx1), 'MinPeakHeight',threshold1, 'MinPeakProminence',prom);
 numPeaks = length(locs);
 
-peakFq = num2str((numPeaks/(thresh_base1(2) - thresh_base1(1) - t)*60), '%.4f');
+peakFq = num2str((numPeaks/((thresh_base1(2) - thresh_base1(1) - t))*60), '%.4f');
 
 subplot(5,1,3)
 plot(time_filt(:, idx1), Grab_filt(:, idx1))
 title(sprintf('ROI: %s, Baseline: %d, Prom: %d, ThreshMax: %.2f, Peaks: %d, Pk/m: %s', ROI, (thresh_base1(2) - thresh_base1(1)), prom, thresh_mult, numPeaks, peakFq))
 ylabel('dFF')
-xlabel('Time (s)')
+
 
 xlim([thresh_base1(1), thresh_base1(2)]);
 
@@ -210,13 +210,13 @@ elseif useOtherThresh == 1
 end
 [pks2,locs2] = findpeaks(Grab_filt(:,idx2), 'MinPeakHeight',threshold2, 'MinPeakProminence',prom);
 numPeaks2 = length(locs2);
-peakFq2 = num2str(numPeaks2/((thresh_base2(2) - thresh_base2(1))*60), '%.4f');
+peakFq2 = num2str((numPeaks2/((thresh_base2(2) - thresh_base2(1)))*60), '%.4f');
 
 subplot(5,1,4)
 plot(time_filt(:,idx2), Grab_filt(:,idx2))
 title(sprintf('ROI: %s, Baseline: %d, Prom: %d, ThreshMax: %.2f, Peaks: %d, Pk/m: %s', ROI, (thresh_base2(2) - thresh_base2(1)), prom, thresh_mult, numPeaks2, peakFq2))
 ylabel('dFF')
-xlabel('Time (s)')
+
 
 xlim([thresh_base2(1), thresh_base2(2)]);
 
