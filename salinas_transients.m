@@ -6,10 +6,10 @@ warning off;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dType = 2; % 1 = TDT, 2 = mat
 t = 30; % first t seconds are discarded to remove LED on artifact
-N = 508; % downsample signal N times
-ISOS = 'x405C'; % set name of isosbestic signal
-Grab = 'x465C'; % set name of Grab signal
-ARTIFACT465 = 50;
+N = 100; % downsample signal N times
+channel = 1;
+ARTIFACT465 = 20;
+saveArtifact = 1; % 0 = do not save, 1 = save, 2 = overwrite
 prom = 3;
 session_duration = 3600;
 thresh_base1 = [t, 300+t];
@@ -27,7 +27,7 @@ if dType == 1
     disp('Data Type: TDT Tank.')
     data = TDTbin2mat(TANK_NAME, 'T2', session_duration+t, 'TYPE', {'streams'});
 elseif dType == 2
-    [TANK_NAME, pathname] = uigetfile('E:\Google Drive\hot-wheels\pre-post-wheel-mats');
+    [TANK_NAME, pathname] = uigetfile('/Users/brandon/personal-drive/hot-wheels/pre-post-wheel-mats');
     
     if TANK_NAME == 0
         disp('Select a mat to start!')
@@ -40,15 +40,57 @@ else
     disp('Select a dType.')
 end
 
+if channel == 1
+    ISOS = 'x405A';
+    Grab = 'x465A';
+elseif channel == 2
+    ISOS = 'x405C';
+    Grab = 'x465C';
+else
+    disp('Cannot resolve channel.')
+    return
+end
+
 if strcmp(Grab,'x465A')
     ROI = 'DLS';
     thresh_mult = 0.5;
+    if saveArtifact == 1 && ~isfield(data, "DLSartifact")
+        data.DLSartifact = ARTIFACT465;
+        disp('New artifact level saved')
+    elseif saveArtifact == 2
+        data.DLSartifact = ARTIFACT465;
+        disp('Overwriting artifact level')
+    elseif saveArtifact == 0 && isfield(data, "DLSartifact")
+        ARTIFACT465 = data.DLSartifact;
+        disp('Artifact level loaded')
+    else
+        disp('Artifact level not saved')
+    end
 elseif strcmp(Grab,'x465C')
     ROI = 'NAc';
     thresh_mult = 0.3;
+    if saveArtifact == 1 && ~isfield(data, "NACartifact")
+        data.NACartifact = ARTIFACT465;
+        disp('New artifact level saved')
+    elseif saveArtifact == 2
+        data.NACartifact = ARTIFACT465;
+        disp('Overwriting artifact level')
+    elseif saveArtifact == 0 && isfield(data, "NACartifact")
+        ARTIFACT465 = data.NACartifact;
+        disp('Artifact level loaded')
+    else
+        disp('Artifact level not saved')
+    end
 else
     disp('Cannot resolve ROI.')
     return
+end
+
+if saveArtifact == 1 || saveArtifact == 2
+    disp('Saved.')
+    save(TANK_NAME, 'data')
+else
+    disp('Artifact threshold not saved')
 end
 
 ISOS_raw = data.streams.(ISOS).data;
@@ -128,10 +170,13 @@ ylabel('dFF')
 
 idx1 = find(thresh_base1(1) < time_filt & time_filt < thresh_base1(2));
 threshold1 = max(Grab_filt(:,idx1))*thresh_mult;
-[pks,locs] = findpeaks(Grab_filt, 'MinPeakHeight',threshold1, 'MinPeakProminence',prom);
+[pks,locs, w, p] = findpeaks(Grab_filt, 'MinPeakHeight',threshold1, 'MinPeakProminence',prom);
 numPeaks = length(locs);
 
-peakFq = num2str(numPeaks/(session_duration-t), '%.2f');
+peakFq = num2str(((numPeaks/(session_duration-t))*60), '%.2f');
+meanWidth = mean(w);
+meanProm = mean(p);
+windowSize = thresh_base1(2) - thresh_base1(1);
 % thresh_str = num2str(thresh_mult);
 subplot(4,1,3)
 plot(time_filt, Grab_filt)
@@ -147,10 +192,13 @@ hold off
 
 idx2 = find(thresh_base2(1) < time_filt & time_filt < thresh_base2(2));
 threshold2 = max(Grab_filt(:,idx2))*thresh_mult;
-[pks2,locs2] = findpeaks(Grab_filt, 'MinPeakHeight',threshold2, 'MinPeakProminence',prom);
+[pks2,locs2, w2, p2] = findpeaks(Grab_filt, 'MinPeakHeight',threshold2, 'MinPeakProminence',prom);
 numPeaks2 = length(locs2);
 
-peakFq2 = num2str(numPeaks2/(session_duration-t), '%.2f');
+peakFq2 = num2str(((numPeaks2/(session_duration-t))*60), '%.2f');
+meanWidth2 = mean(w2);
+meanProm2 = mean(p2);
+windowSize2 = thresh_base2(2) - thresh_base2(1);
 
 subplot(4,1,4)
 plot(time_filt, Grab_filt)
@@ -178,3 +226,20 @@ if figSave == 1
 else
     disp('Figure not saved')
 end
+
+id_table = {name, ROI};
+id_table = cell2table(id_table, 'VariableNames', {'File', 'ROI'});
+data_table1 = [windowSize, meanWidth, meanProm, str2double(peakFq)];
+data_table2 = [windowSize2, meanWidth2, meanProm2, str2double(peakFq2)];
+% Convert the single array to a cell array
+data_table1 = num2cell(data_table1);
+data_table2 = num2cell(data_table2);
+data_table1 = cell2table(data_table1, 'VariableNames', {'ThreshWindow', 'Width', 'Prominence', 'Frequency'});
+data_table2 = cell2table(data_table2, 'VariableNames', {'ThreshWindow', 'Width', 'Prominence', 'Frequency'});
+
+% Now you can concatenate the tables
+data_table = [id_table, data_table1; id_table, data_table2];
+
+% save data_table to csv file
+writetable(data_table, char(strcat(pathname,name,{'_'},ROI,'.csv')));
+disp('Data saved to csv file.')
