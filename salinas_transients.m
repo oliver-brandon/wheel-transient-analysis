@@ -5,13 +5,13 @@ warning off;
 %%%%%%%%%%%%%%%%%%%%%%%%% Variables to Change %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dType = 2; % 1 = TDT, 2 = mat
-t = 30; % first t seconds are discarded to remove LED on artifact
+t = 10; % first t seconds are discarded to remove LED on artifact
 N = 100; % downsample signal N times
-channel = 1;
-ARTIFACT465 = 20;
+channel = 2; % 1 = 465A, 2 = 465C
+ARTIFACT465 = 30;
 saveArtifact = 1; % 0 = do not save, 1 = save, 2 = overwrite
-prom = 3;
 session_duration = 3600;
+% thresh_base1 = [250, 550];
 thresh_base1 = [t, 300+t];
 thresh_base2 = [t, 3600+t];
 figSave = 0; % saves to folder with mat files
@@ -54,6 +54,7 @@ end
 if strcmp(Grab,'x465A')
     ROI = 'DLS';
     thresh_mult = 0.5;
+    prom = 3;
     if saveArtifact == 1 && ~isfield(data, "DLSartifact")
         data.DLSartifact = ARTIFACT465;
         disp('New artifact level saved')
@@ -69,6 +70,7 @@ if strcmp(Grab,'x465A')
 elseif strcmp(Grab,'x465C')
     ROI = 'NAc';
     thresh_mult = 0.3;
+    prom = 1;
     if saveArtifact == 1 && ~isfield(data, "NACartifact")
         data.NACartifact = ARTIFACT465;
         disp('New artifact level saved')
@@ -215,8 +217,8 @@ all_axes = findall(gcf, 'type', 'axes');
 for ax = all_axes'
     xlim(ax, x_limits);
 end
-
-max(Grab_dFF)
+session_max_amp = max(Grab_dFF);
+fprintf('Max session amplitude: %.2f\n', session_max_amp);
 if figSave == 1
     disp('Saving figure.')
     % Save figure 1 to pathname

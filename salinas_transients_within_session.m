@@ -7,11 +7,10 @@ warning off;
 dType = 2; % 1 = TDT, 2 = mat
 t = 30; % first t seconds are discarded to remove LED on artifact
 N = 100; % downsample signal N times
-channel = 2; % 1 = A, 2 = C
+channel = 1; % 1 = A, 2 = C
 ARTIFACT465 = 0;
 saveArtifact = 0; % 0 = do not save, 1 = save, 2 = overwrite
-figSave = 1; % saves to folder with mat files
-prom = 3;
+figSave = 0; % saves to folder with mat files
 session_duration = 5400;
 thresh_base1 = [t, 600]; % baseline for first 10 minutes (habituation)
 thresh_base2 = [600, 1800]; % baseline for next 20 minutes (vehicle)
@@ -58,7 +57,7 @@ end
 if strcmp(Grab,'x465A')
     ROI = 'DLS';
     thresh_mult = 0.5;
-    
+    prom = 3;
     if saveArtifact == 1 && ~isfield(data, "DLSartifact")
         data.DLSartifact = ARTIFACT465;
         disp('New artifact level saved')
@@ -74,7 +73,7 @@ if strcmp(Grab,'x465A')
 elseif strcmp(Grab,'x465C') 
     ROI = 'NAc';
     thresh_mult = 0.3;
-    
+    prom = 1;
     if saveArtifact == 1 && ~isfield(data, "NACartifact")
         data.NACartifact = ARTIFACT465;
         disp('New artifact level saved')
